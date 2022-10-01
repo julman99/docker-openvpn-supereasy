@@ -32,6 +32,6 @@ The container can spin up OpenVPN in udp and/or tcp mode. For this just specify 
 
 # Client .ovpn files
 
-You can specify an arbitrary number of clients in the variable `OPENVPN_CLIENTS`. This is a space separated list. The container will automatically generate a `.ovpn file for each client and put it in the volume mounted at `/etc/openvpn/clients`. If you delete a client from the list the server *will still accept* connections from that client. At the moment there is no way to blacklist a client.
+You can specify an arbitrary number of clients in the variable `OPENVPN_CLIENTS`. This is a space separated list. The container will automatically generate a `.ovpn` file for each client and put it in the volume mounted at `/etc/openvpn/clients`. If you delete a client from the list the server *will still accept* connections from that client. At the moment there is no way to blacklist a client.
 
 The `.ovpn` files are re-generated every time the container starts. This allows to change parameters such as the server port, protocol, dns etc and still have the .opvpn file updated. The cert/key combination for each client will not change even if the `.ovpn` file is re-generated.
