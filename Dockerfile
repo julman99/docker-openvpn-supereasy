@@ -1,7 +1,5 @@
-FROM ubuntu:20.04
-RUN apt-get update && \
-    apt-get install -y openvpn easy-rsa iptables && \
-    rm -r /var/lib/apt/lists
+FROM alpine
+RUN  apk add openvpn easy-rsa iptables bash
 
 ENV EASYRSA_BATCH=yes \
     OPENVPN_PORT_UDP=1194 \
