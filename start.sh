@@ -65,7 +65,7 @@ function create_client {
     echo "persist-tun" >> "$client_file"
     echo "mute-replay-warnings" >> "$client_file"
     echo "remote-cert-tls server" >> "$client_file"
-    echo "cipher AES-256-CBC" >> "$client_file"
+    echo "cipher $OPENVPN_CIPHER" >> "$client_file"
     echo "verb 3" >> "$client_file"
     echo "remote-cert-tls server" >> "$client_file"
 
@@ -118,7 +118,7 @@ function run_openvpn {
         --cert /etc/openvpn/server/issued/server.crt \
         --key /etc/openvpn/server/private/server.key \
         --tls-auth /etc/openvpn/server/ta.key \
-        --cipher AES-256-CBC \
+        --data-ciphers AES-256-CBC:AES-128-CBC:AES-256-GCM:AES-128-GCM \
         --persist-tun \
         --persist-key \
         --push "redirect-gateway def1" \
@@ -160,6 +160,9 @@ fi
 if [ -z $OPENVPN_PORT_UDP ] && [ -z $OPENVPN_PORT_TCP ]; then
     echo "Error: OPENVPN_PORT_UDP and/or OPENVPN_PORT_TCP must be set"
     exit 2
+fi
+if [ "$OPENVPN_CIPHER" == "" ];then
+    OPENVPN_CIPHER="AES-256-GCM"
 fi
 
 assert_variable "OPENVPN_EXTERNAL_HOSTNAME"
