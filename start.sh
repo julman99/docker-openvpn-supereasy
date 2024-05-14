@@ -68,6 +68,10 @@ function create_client {
     echo "cipher $OPENVPN_CIPHER" >> "$client_file"
     echo "verb 3" >> "$client_file"
     echo "remote-cert-tls server" >> "$client_file"
+    echo "tun-mtu 1500" >> "$client_file"
+    echo "mssfix 1450" >> "$client_file"
+    echo "sndbuf 393216" >> "$client_file"
+    echo "rcvbuf 393216" >> "$client_file"
 
     echo "<key>" >> "$client_file"
     cat ./pki/private/$client.key >> "$client_file"
@@ -123,7 +127,7 @@ function run_openvpn {
         --persist-key \
         --push "redirect-gateway def1" \
         --push "block-outside-dns" \
-        --push "topology net30" \
+        --push "topology subnet" \
         --push "ping $OPENVPN_PING" \
         --push "ping-restart $OPENVPN_PING_RESTART" \
         --push "dhcp-option DNS $OPENVPN_DNS" &
