@@ -121,6 +121,7 @@ function run_openvpn {
         --data-ciphers AES-256-CBC:AES-128-CBC:AES-256-GCM:AES-128-GCM \
         --persist-tun \
         --persist-key \
+        --topology subnet \
         --push "redirect-gateway def1" \
         --push "block-outside-dns" \
         --push "topology subnet" \
