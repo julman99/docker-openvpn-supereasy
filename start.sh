@@ -65,7 +65,6 @@ function create_client {
     echo "persist-tun" >> "$client_file"
     echo "mute-replay-warnings" >> "$client_file"
     echo "remote-cert-tls server" >> "$client_file"
-    echo "cipher $OPENVPN_CIPHER" >> "$client_file"
     echo "verb 3" >> "$client_file"
     echo "remote-cert-tls server" >> "$client_file"
 
@@ -128,6 +127,7 @@ function run_openvpn {
         --push "ping $OPENVPN_PING" \
         --push "ping-restart $OPENVPN_PING_RESTART" \
         --push "dhcp-option DNS $OPENVPN_DNS" \
+        --push "cipher $OPENVPN_CIPHER" \
         --tun-mtu 1500 \
         --mssfix 1450 \
         --push "tun-mtu 1500" \
