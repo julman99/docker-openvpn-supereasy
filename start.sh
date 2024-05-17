@@ -117,7 +117,7 @@ function run_openvpn {
         --cert /etc/openvpn/server/issued/server.crt \
         --key /etc/openvpn/server/private/server.key \
         --tls-auth /etc/openvpn/server/ta.key \
-        --data-ciphers AES-256-CBC:AES-128-CBC:AES-256-GCM:AES-128-GCM \
+        $OPENVPN_CIPHER \
         --persist-tun \
         --persist-key \
         --topology subnet \
@@ -127,7 +127,6 @@ function run_openvpn {
         --push "ping $OPENVPN_PING" \
         --push "ping-restart $OPENVPN_PING_RESTART" \
         --push "dhcp-option DNS $OPENVPN_DNS" \
-        --push "cipher $OPENVPN_CIPHER" \
         --tun-mtu 1500 \
         --mssfix 1450 \
         --push "tun-mtu 1500" \
@@ -171,8 +170,8 @@ if [ -z $OPENVPN_PORT_UDP ] && [ -z $OPENVPN_PORT_TCP ]; then
     echo "Error: OPENVPN_PORT_UDP and/or OPENVPN_PORT_TCP must be set"
     exit 2
 fi
-if [ "$OPENVPN_CIPHER" == "" ];then
-    OPENVPN_CIPHER="AES-256-GCM"
+if [ "$OPENVPN_CIPHER" != "" ];then
+    OPENVPN_CIPHER="--data-ciphers $OPENVPN_CIPHER --cipher $OPENVPN_CIPHER"
 fi
 if [ "$OPENVPN_FASTIO" == "true" ] || [ "$OPENVPN_FASTIO" == "1" ];then
     echo "Notice: --fast-io is enabled"
