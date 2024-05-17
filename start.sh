@@ -68,10 +68,6 @@ function create_client {
     echo "cipher $OPENVPN_CIPHER" >> "$client_file"
     echo "verb 3" >> "$client_file"
     echo "remote-cert-tls server" >> "$client_file"
-    echo "tun-mtu 1500" >> "$client_file"
-    echo "mssfix 1450" >> "$client_file"
-    echo "sndbuf 393216" >> "$client_file"
-    echo "rcvbuf 393216" >> "$client_file"
 
     echo "<key>" >> "$client_file"
     cat ./pki/private/$client.key >> "$client_file"
@@ -130,7 +126,16 @@ function run_openvpn {
         --push "topology subnet" \
         --push "ping $OPENVPN_PING" \
         --push "ping-restart $OPENVPN_PING_RESTART" \
-        --push "dhcp-option DNS $OPENVPN_DNS" &
+        --push "dhcp-option DNS $OPENVPN_DNS" \
+        --tun-mtu 1500 \
+        --mssfix 1450 \
+        --push "tun-mtu 1500" \
+        --push "mssfix 1450" \
+        --sndbuf 524288 \
+        --rcvbuf 524288 \
+        --push "sndbuf 524288" \
+        --push "rcvbuf 524288" \
+        $OPENVPN_FASTIO
 }
 
 function start {
@@ -144,12 +149,12 @@ function start {
     if [ ! -z $OPENVPN_PORT_UDP ]; then
         echo "Starting openvpn with udp..."
         iptables -t nat -A POSTROUTING -s '10.8.0.0/24' -o eth0 -j MASQUERADE
-        run_openvpn $OPENVPN_PORT_UDP "udp" "tun0" "10.8.0.0"
+        run_openvpn $OPENVPN_PORT_UDP "udp" "tun0" "10.8.0.0" &
     fi
     if [ ! -z $OPENVPN_PORT_TCP ]; then
         echo "Starting openvpn with tcp..."
         iptables -t nat -A POSTROUTING -s '10.9.0.0/24' -o eth0 -j MASQUERADE
-        run_openvpn $OPENVPN_PORT_TCP "tcp" "tun1" "10.9.0.0"
+        run_openvpn $OPENVPN_PORT_TCP "tcp" "tun1" "10.9.0.0" &
     fi
 
     wait -n
@@ -167,6 +172,12 @@ if [ -z $OPENVPN_PORT_UDP ] && [ -z $OPENVPN_PORT_TCP ]; then
 fi
 if [ "$OPENVPN_CIPHER" == "" ];then
     OPENVPN_CIPHER="AES-256-GCM"
+fi
+if [ "$OPENVPN_FASTIO" == "true" ] || [ "$OPENVPN_FASTIO" == "1" ];then
+    echo "Notice: --fast-io is enabled"
+    OPENVPN_FASTIO="--fast-io"
+else
+    OPENVPN_FASTIO=""
 fi
 
 assert_variable "OPENVPN_EXTERNAL_HOSTNAME"
