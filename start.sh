@@ -110,7 +110,7 @@ function run_openvpn {
         --local 0.0.0.0 \
         --port $port \
         --proto $proto \
-        --keepalive 10 60 \
+        --keepalive $OPENVPN_PING $OPENVPN_PING_RESTART \
         --bind \
         --dh /etc/openvpn/server/dh.pem \
         --ca /etc/openvpn/server/ca.crt \
@@ -124,8 +124,6 @@ function run_openvpn {
         --push "redirect-gateway def1" \
         --push "block-outside-dns" \
         --push "topology subnet" \
-        --push "ping $OPENVPN_PING" \
-        --push "ping-restart $OPENVPN_PING_RESTART" \
         --push "dhcp-option DNS $OPENVPN_DNS" \
         --sndbuf 524288 \
         --rcvbuf 524288 \
