@@ -72,6 +72,8 @@ function create_client {
     echo "persist-tun" >> "$client_file"
     echo "mute-replay-warnings" >> "$client_file"
     echo "remote-cert-tls server" >> "$client_file"
+    echo "auth SHA256" >> "$client_file"
+    echo "key-direction 1" >> "$client_file"
     echo "verb 3" >> "$client_file"
 
     echo "<key>" >> "$client_file"
@@ -137,6 +139,8 @@ function run_openvpn {
         --cert /etc/openvpn/server/issued/server.crt \
         --key /etc/openvpn/server/private/server.key \
         --tls-auth /etc/openvpn/server/ta.key \
+        --key-direction 0 \
+        --auth SHA256 \
         $OPENVPN_CIPHER \
         --persist-tun \
         --persist-key \
