@@ -98,6 +98,25 @@ function create_clients {
     done
 }
 
+function blacklist_unlisted_clients {
+    mkdir -p "$CRL_BLACKLIST_DIR"
+    cd "$EASY_RSA_PATH"
+    for cert_file in $(ls pki/issued/*.crt); do
+        client_name=$(basename "$cert_file" .crt)
+        if [[ ! " $OPENVPN_CLIENTS " =~ " $client_name " ]]; then
+            echo "Blacklisting client $client_name"
+            ./easyrsa revoke "$client_name"
+            ./easyrsa gen-crl
+            mv "pki/issued/$client_name.crt" "$CRL_BLACKLIST_DIR/"
+            mv "pki/private/$client_name.key" "$CRL_BLACKLIST_DIR/"
+            if [ -f "/etc/openvpn/clients/$client_name.ovpn" ]; then
+                rm "/etc/openvpn/clients/$client_name.ovpn"
+            fi
+        fi
+    done
+    cp -f pki/crl.pem /etc/openvpn/server/crl.pem
+}
+
 function run_openvpn {
     port="$1"
     proto="$2"
@@ -185,4 +204,5 @@ else
 fi
 
 create_clients
+blacklist_unlisted_clients
 start
