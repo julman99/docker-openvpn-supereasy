@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -eu
 
 EASY_RSA_PATH="/etc/openvpn/server/easy-rsa"
 READY_FILE="/etc/openvpn/server/.ready"
