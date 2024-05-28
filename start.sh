@@ -43,11 +43,9 @@ function initialize {
 
 function create_client {
     client="$1"
-    port="$2"
-    proto="$3"
 
     mkdir -p /etc/openvpn/clients
-    client_file="/etc/openvpn/clients/$client.$proto.ovpn"
+    client_file="/etc/openvpn/clients/$client.ovpn"
     if [ ! -f "./pki/private/$client.key" ]; then
         echo "Creating certificate and keys for client $client"
         ./easyrsa build-client-full $client nopass
@@ -57,8 +55,18 @@ function create_client {
     echo "" > "$client_file"
     echo "client" >> "$client_file"
     echo "dev tun" >> "$client_file"
-    echo "proto $proto" >> "$client_file"
-    echo "remote $OPENVPN_EXTERNAL_HOSTNAME $port" >> "$client_file"
+    if [ ! -z $OPENVPN_PORT_UDP ]; then
+        echo "<connection>"
+        echo "proto udp" >> "$client_file"
+        echo "remote $OPENVPN_EXTERNAL_HOSTNAME $OPENVPN_PORT_UDP" >> "$client_file"
+        echo "</connection>"
+    fi
+    if [ ! -z $OPENVPN_PORT_TCP ]; then
+        echo "<connection>"
+        echo "proto tcp" >> "$client_file"
+        echo "remote $OPENVPN_EXTERNAL_HOSTNAME $OPENVPN_PORT_TCP" >> "$client_file"
+        echo "</connection>"
+    fi
     echo "resolv-retry infinite" >> "$client_file"
     echo "nobind" >> "$client_file"
     echo "persist-key" >> "$client_file"
@@ -88,12 +96,7 @@ function create_client {
 function create_clients {
     cd $EASY_RSA_PATH
     for client in $OPENVPN_CLIENTS; do
-        if [ ! -z $OPENVPN_PORT_UDP ]; then
-            create_client $client $OPENVPN_PORT_UDP "udp"
-        fi
-        if [ ! -z $OPENVPN_PORT_TCP ]; then
-            create_client $client $OPENVPN_PORT_TCP "tcp"
-        fi
+        create_client $client
     done
 }
 
