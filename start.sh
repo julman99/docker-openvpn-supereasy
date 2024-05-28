@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu
+set -e
 
 EASY_RSA_PATH="/etc/openvpn/server/easy-rsa"
 READY_FILE="/etc/openvpn/server/.ready"
@@ -54,26 +54,14 @@ function create_client {
     echo "" > "$client_file"
     echo "client" >> "$client_file"
     echo "dev tun" >> "$client_file"
-    if [ ! -z "$OPENVPN_PORT_UDP" ]; then
-        echo "<connection>" >> "$client_file"
-        echo "proto udp" >> "$client_file"
-        echo "remote $OPENVPN_EXTERNAL_HOSTNAME $OPENVPN_PORT_UDP" >> "$client_file"
-        echo "</connection>" >> "$client_file"
-    fi
-    if [ ! -z "$OPENVPN_PORT_TCP" ]; then
-        echo "<connection>" >> "$client_file"
-        echo "proto tcp" >> "$client_file"
-        echo "remote $OPENVPN_EXTERNAL_HOSTNAME $OPENVPN_PORT_TCP" >> "$client_file"
-        echo "</connection>" >> "$client_file"
-    fi
-    echo "resolv-retry infinite" >> "$client_file"
     echo "nobind" >> "$client_file"
+    echo "key-direction 1" >> "$client_file"
+    echo "auth SHA256" >> "$client_file"
+    echo "resolv-retry infinite" >> "$client_file"
     echo "persist-key" >> "$client_file"
     echo "persist-tun" >> "$client_file"
     echo "mute-replay-warnings" >> "$client_file"
     echo "remote-cert-tls server" >> "$client_file"
-    echo "auth SHA256" >> "$client_file"
-    echo "key-direction 1" >> "$client_file"
     echo "verb 3" >> "$client_file"
 
     echo "<key>" >> "$client_file"
@@ -91,6 +79,19 @@ function create_client {
     echo "<tls-auth>" >> "$client_file"
     cat /etc/openvpn/server/ta.key >> "$client_file"
     echo "</tls-auth>" >> "$client_file"
+
+    if [ ! -z "$OPENVPN_PORT_UDP" ]; then
+        echo "<connection>" >> "$client_file"
+        echo "proto udp" >> "$client_file"
+        echo "remote $OPENVPN_EXTERNAL_HOSTNAME $OPENVPN_PORT_UDP" >> "$client_file"
+        echo "</connection>" >> "$client_file"
+    fi
+    if [ ! -z "$OPENVPN_PORT_TCP" ]; then
+        echo "<connection>" >> "$client_file"
+        echo "proto tcp" >> "$client_file"
+        echo "remote $OPENVPN_EXTERNAL_HOSTNAME $OPENVPN_PORT_TCP" >> "$client_file"
+        echo "</connection>" >> "$client_file"
+    fi
 }
 
 function create_clients {
@@ -103,14 +104,14 @@ function create_clients {
 function blacklist_unlisted_clients {
     mkdir -p "$CRL_BLACKLIST_DIR"
     cd "$EASY_RSA_PATH"
+    touch pki/crl.pem
     for cert_file in $(ls pki/issued/*.crt); do
         client_name=$(basename "$cert_file" .crt)
-        if [[ ! " $OPENVPN_CLIENTS " =~ " $client_name " ]]; then
-            echo "Blacklisting client $client_name"
+        if [[ ! " $OPENVPN_CLIENTS " =~ " $client_name " && "$client_name" != "server" ]]; then
+            echo "Blacklisting client $client_name found on file $cert_file"
             ./easyrsa revoke "$client_name"
             ./easyrsa gen-crl
-            mv "pki/issued/$client_name.crt" "$CRL_BLACKLIST_DIR/"
-            mv "pki/private/$client_name.key" "$CRL_BLACKLIST_DIR/"
+
             if [ -f "/etc/openvpn/clients/$client_name.ovpn" ]; then
                 rm "/etc/openvpn/clients/$client_name.ovpn"
             fi
@@ -141,6 +142,7 @@ function run_openvpn {
         --tls-auth /etc/openvpn/server/ta.key \
         --key-direction 0 \
         --auth SHA256 \
+        --crl-verify /etc/openvpn/server/crl.pem \
         $OPENVPN_CIPHER \
         --persist-tun \
         --persist-key \
@@ -207,6 +209,20 @@ else
     echo "Existing configuration detected... skipping openvpn initialization"
 fi
 
-create_clients
-blacklist_unlisted_clients
-start
+COMMAND=${1:-serve}
+
+case "$COMMAND" in
+    "serve")
+        create_clients
+        blacklist_unlisted_clients
+        start
+        ;;
+    "setup")
+        create_clients
+        blacklist_unlisted_clients
+        ;;
+    *)
+        echo "Error: Invalid command. Use 'serve' or 'prepare'."
+        exit 1
+        ;;
+esac
