@@ -22,6 +22,26 @@ function @assert_ls {
     @assert_equals "$FILES" "$2"
 }
 
+function @assert_files_equals() {
+    local file1=$1
+    local file2=$2
+
+    if ! cmp -s "$file1" "$file2"; then
+        echo "Error: The files '$file1' and '$file2' are not equal."
+        exit 1
+    fi
+}
+
+@assert_files_not_equal() {
+    local file1=$1
+    local file2=$2
+
+    if cmp -s "$file1" "$file2"; then
+        echo "Error: The files '$file1' and '$file2' are equal."
+        exit 1
+    fi
+}
+
 @assert_exit_code() {
 expected_exit_code=$1
     shift
