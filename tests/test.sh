@@ -1,4 +1,7 @@
 #!/bin/bash
+script_dir=$(dirname "$(readlink -f "$0")")
+pushd "$script_dir"
+
 source testlib.sh
 set -e
 docker build ../ -t ovpn-test --platform linux/amd64
