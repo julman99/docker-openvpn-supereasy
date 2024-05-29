@@ -4,7 +4,7 @@ pushd "$script_dir"
 
 source testlib.sh
 set -e
-docker build ../ -t ovpn-test --platform linux/amd64
+docker build ../ -t ovpn-test
 
 MAIN_SERVER_DIR=$HOME/.openvpn-supereasy
 
