@@ -1,5 +1,9 @@
-FROM alpine
-RUN  apk add --no-cache openvpn easy-rsa iptables bash
+FROM alpine:3.20
+RUN  apk add --no-cache \
+    openvpn=2.6.10-r0 \
+    easy-rsa \
+    iptables \
+    bash
 
 ENV EASYRSA_BATCH=yes \
     OPENVPN_PORT_UDP=1194 \
