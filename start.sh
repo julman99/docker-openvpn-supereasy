@@ -95,6 +95,8 @@ function create_client {
 }
 
 function create_clients {
+    mkdir -p /etc/openvpn/clients
+    find /etc/openvpn/clients -name "*.ovpn" | xargs -r rm
     cd "$EASY_RSA_PATH"
     for client in $OPENVPN_CLIENTS; do
         create_client "$client"
@@ -111,10 +113,6 @@ function blacklist_unlisted_clients {
             echo "Blacklisting client $client_name found on file $cert_file"
             ./easyrsa revoke "$client_name"
             ./easyrsa gen-crl
-
-            if [ -f "/etc/openvpn/clients/$client_name.ovpn" ]; then
-                rm "/etc/openvpn/clients/$client_name.ovpn"
-            fi
         fi
     done
     cp -f pki/crl.pem /etc/openvpn/server/crl.pem
