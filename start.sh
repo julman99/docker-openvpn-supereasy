@@ -166,13 +166,13 @@ function start {
 
     if [ ! -z "$OPENVPN_PORT_UDP" ]; then
         echo "Starting openvpn with udp..."
-        iptables -t nat -A POSTROUTING -s '10.8.0.0/24' -o eth0 -j MASQUERADE
-        run_openvpn "$OPENVPN_PORT_UDP" "udp" "tun0" "10.8.0.0" &
+        iptables -t nat -A POSTROUTING -s '10.8.0.0/24' -o "$OPENVPN_DEFROUTE_DEV" -j MASQUERADE
+        run_openvpn "$OPENVPN_PORT_UDP" "udp" "tun$OPENVPN_TUN_UDP" "10.8.0.0" &
     fi
     if [ ! -z "$OPENVPN_PORT_TCP" ]; then
         echo "Starting openvpn with tcp..."
-        iptables -t nat -A POSTROUTING -s '10.9.0.0/24' -o eth0 -j MASQUERADE
-        run_openvpn "$OPENVPN_PORT_TCP" "tcp" "tun1" "10.9.0.0" &
+        iptables -t nat -A POSTROUTING -s '10.9.0.0/24' -o "$OPENVPN_DEFROUTE_DEV" -j MASQUERADE
+        run_openvpn "$OPENVPN_PORT_TCP" "tcp" "tun$OPENVPN_TUN_TCP" "10.9.0.0" &
     fi
 
     wait -n
