@@ -78,3 +78,5 @@ function test-client-revoke-crl-generation() {
 test-client-generation
 test-client-connect-revoke
 test-client-revoke-crl-generation
+
+echo 'Success! All tests passed'
