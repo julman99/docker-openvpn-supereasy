@@ -15,6 +15,59 @@ function assert_variable {
     fi
 }
 
+assert_cidr() {
+    local cidr="$1"
+
+    # Check if the CIDR has a mask, add /24 if not
+    if [[ ! $cidr =~ / ]]; then
+        cidr="$cidr/24"
+    fi
+
+    # Inline is_valid_cidr logic
+    if [[ $cidr =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]{1,2})$ ]]; then
+        local ip="${cidr%/*}"
+        local mask="${cidr#*/}"
+
+        # Validate IP address
+        if [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+            IFS='.' read -r -a octets <<< "$ip"
+            for octet in "${octets[@]}"; do
+                if ((octet < 0 || octet > 255)); then
+                    echo "Error: Invalid CIDR notation."
+                    exit 1
+                fi
+            done
+        else
+            echo "Error: Invalid CIDR notation."
+            exit 1
+        fi
+
+        # Validate mask
+        if ! ((mask >= 0 && mask <= 32)); then
+            echo "Error: Invalid CIDR notation."
+            exit 1
+        fi
+    else
+        echo "Error: Invalid CIDR notation."
+        exit 1
+    fi
+
+    # Check if the mask is less than /16
+    if ((mask < 16)); then
+        echo "Error: CIDR mask is less than /16."
+        exit 1
+    fi
+}
+
+wait_for_tun() {
+  local TUN_DEVICE=$1
+  while ! ip link show "$TUN_DEVICE" > /dev/null 2>&1; do
+    echo "Waiting for $TUN_DEVICE to be created..."
+    sleep 1
+  done
+  echo "$TUN_DEVICE exists!"
+}
+
 function initialize {
     echo "Initializing openvpn for the first time"
 
@@ -119,13 +172,14 @@ function blacklist_unlisted_clients {
 }
 
 function run_openvpn {
-    port="$1"
-    proto="$2"
-    tun="$3"
-    net="$4"
-
+    local port="$1"
+    local proto="$2"
+    local tun="$3"
+    local net="$4"
+    local net_ip=$(ipcalc -n "$net" | grep 'NETWORK' | awk -F '=' '{print $2}')
+    local net_mask=$(ipcalc -n -m "$net" | grep 'NETMASK' | awk -F '=' '{print $2}')
     openvpn \
-        --server "$net" 255.255.255.0 \
+        --server "$net_ip" "$net_mask" \
         --dev "$tun" \
         --dev-type "tun" \
         --mode server \
@@ -167,13 +221,17 @@ function start {
 
     if [ ! -z "$OPENVPN_PORT_UDP" ]; then
         echo "Starting openvpn with udp..."
-        iptables -t nat -A POSTROUTING -s '10.8.0.0/24' -o "$OPENVPN_ROUTE_DEV" -j MASQUERADE
-        run_openvpn "$OPENVPN_PORT_UDP" "udp" "ovpnsetun0" "10.8.0.0" &
+        run_openvpn "$OPENVPN_PORT_UDP" "udp" "ovpnsetun0" "$OPENVPN_NETWORK_UDP" &
+        wait_for_tun "ovpnsetun0"
+
+        iptables -t nat -A POSTROUTING -s "$OPENVPN_NETWORK_UDP" -o "$OPENVPN_ROUTE_DEV" -j MASQUERADE
     fi
     if [ ! -z "$OPENVPN_PORT_TCP" ]; then
         echo "Starting openvpn with tcp..."
-        iptables -t nat -A POSTROUTING -s '10.9.0.0/24' -o "$OPENVPN_ROUTE_DEV" -j MASQUERADE
-        run_openvpn "$OPENVPN_PORT_TCP" "tcp" "ovpnsetun1" "10.9.0.0" &
+        run_openvpn "$OPENVPN_PORT_TCP" "tcp" "ovpnsetun1" "$OPENVPN_NETWORK_TCP" &
+        wait_for_tun "ovpnsetun1"
+
+        iptables -t nat -A POSTROUTING -s "$OPENVPN_NETWORK_TCP" -o "$OPENVPN_ROUTE_DEV" -j MASQUERADE
     fi
 
     wait -n
@@ -198,6 +256,18 @@ if [ "$OPENVPN_FASTIO" == "true" ] || [ "$OPENVPN_FASTIO" == "1" ]; then
 else
     OPENVPN_FASTIO=""
 fi
+
+# Check if the CIDR has a mask, add /24 if not
+if [[ ! $OPENVPN_NETWORK_UDP =~ / ]]; then
+    OPENVPN_NETWORK_UDP="$OPENVPN_NETWORK_UDP/24"
+fi
+if [[ ! $OPENVPN_NETWORK_TCP =~ / ]]; then
+    OPENVPN_NETWORK_TCP="$OPENVPN_NETWORK_TCP/24"
+fi
+
+# Validate the CIDR
+assert_cidr $OPENVPN_NETWORK_UDP
+assert_cidr $OPENVPN_NETWORK_TCP
 
 assert_variable "OPENVPN_EXTERNAL_HOSTNAME"
 assert_variable "OPENVPN_CLIENTS"

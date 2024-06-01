@@ -75,8 +75,40 @@ function test-client-revoke-crl-generation() {
     @assert_equals "`openssl crl -text -noout -in server/crl.pem | grep $test2_serial | cut -d':' -f2 | xargs`" "$test2_serial"
 }
 
+
+function test-cidr-validation() {
+    reset_openvpn
+
+    #udp
+    local output=$(@ovpn-setup -e OPENVPN_NETWORK_UDP="s")
+    @assert_equals "Error: Invalid CIDR notation." "$output"
+
+    local output=$(@ovpn-setup -e OPENVPN_NETWORK_UDP="500.0.0.0/24")
+    @assert_equals "Error: Invalid CIDR notation." "$output"
+
+    local output=$(@ovpn-setup -e OPENVPN_NETWORK_UDP="10.0.0.0/34")
+    @assert_equals "Error: Invalid CIDR notation." "$output"
+
+    local output=$(@ovpn-setup -e OPENVPN_NETWORK_UDP="")
+    @assert_equals "Error: Invalid CIDR notation." "$output"
+
+    #tcp
+    local output=$(@ovpn-setup -e OPENVPN_NETWORK_TCP="s")
+    @assert_equals "Error: Invalid CIDR notation." "$output"
+
+    local output=$(@ovpn-setup -e OPENVPN_NETWORK_TCP="500.0.0.0/24")
+    @assert_equals "Error: Invalid CIDR notation." "$output"
+
+    local output=$(@ovpn-setup -e OPENVPN_NETWORK_TCP="10.0.0.0/34")
+    @assert_equals "Error: Invalid CIDR notation." "$output"
+
+    local output=$(@ovpn-setup -e OPENVPN_NETWORK_TCP="")
+    @assert_equals "Error: Invalid CIDR notation." "$output"
+}
+
 test-client-generation
 test-client-connect-revoke
 test-client-revoke-crl-generation
+test-cidr-validation
 
 echo 'Success! All tests passed'
