@@ -208,6 +208,7 @@ function run_openvpn {
         --rcvbuf 524288 \
         --push "sndbuf 524288" \
         --push "rcvbuf 524288" \
+        --tun-mtu $OPENVPN_TUN_MTU \
         $OPENVPN_FASTIO
 }
 
