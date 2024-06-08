@@ -22,6 +22,10 @@ openvpn-supereasy:
     - OPENVPN_PING_RESTART=60 #optional, restart connection if no ping has been sucessful for the specified time
     - OPENVPN_CIPHER=some.cipher #optional, one of AES-256-GCM, AES-128-GCM, AES-256-CBC or AES-128-CBC. If ommited OpenVPN tries to negotiate the most secure cipher supported by both server and client
     - OPENVPN_FASTIO=0 #optional, enable fastio on the server
+    - OPENVPN_NETWORK_UDP=0 #optional, network that will be used for clients conneting through udp. Defaults to 10.8.0.0/24
+    - OPENVPN_NETWORK_TCP=0 #optional, network that will be used for clients conneting through tcp. Defaults to 10.9.0.0/24
+    - OPENVPN_ROUTE_DEV=0 #optional, device to route traffic, this parameter is useful when running openvpn with host networking
+    - OPENVPN_TUN_MTU=0 #optional, change mtu size. Defaults to 1420
     - TZ=America/New_York   #optional timezone
   volumes:
     - <path-to-server-config>:/etc/openvpn/server
