@@ -165,7 +165,7 @@ function blacklist_unlisted_clients {
         if [[ ! " $OPENVPN_CLIENTS " =~ " $client_name " && "$client_name" != "server" ]]; then
             echo "Blacklisting client $client_name found on file $cert_file"
             ./easyrsa revoke "$client_name"
-            ./easyrsa gen-crl
+            ./easyrsa --days=3650 gen-crl
         fi
     done
     cp -f pki/crl.pem /etc/openvpn/server/crl.pem
