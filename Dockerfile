@@ -1,6 +1,6 @@
-FROM alpine:3.20
+FROM alpine:3.21
 RUN  apk add --no-cache \
-    openvpn=2.6.11-r0 \
+    openvpn=2.6.12-r1 \
     easy-rsa \
     iptables \
     bash
