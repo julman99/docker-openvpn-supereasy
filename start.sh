@@ -209,6 +209,7 @@ function run_openvpn {
         --push "sndbuf 524288" \
         --push "rcvbuf 524288" \
         --tun-mtu $OPENVPN_TUN_MTU \
+        $OPENVPN_MSSFIX \
         $OPENVPN_FASTIO
 }
 
@@ -256,6 +257,12 @@ if [ "$OPENVPN_FASTIO" == "true" ] || [ "$OPENVPN_FASTIO" == "1" ]; then
     OPENVPN_FASTIO="--fast-io"
 else
     OPENVPN_FASTIO=""
+fi
+
+if [ -n "$OPENVPN_MSSFIX" ]; then
+    OPENVPN_MSSFIX="--mssfix $OPENVPN_MSSFIX"
+else
+    OPENVPN_MSSFIX=""
 fi
 
 # Check if the CIDR has a mask, add /24 if not
