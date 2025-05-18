@@ -27,8 +27,8 @@ openvpn-supereasy:
     - OPENVPN_NETWORK_UDP=0 #optional, network that will be used for clients conneting through udp. Defaults to 10.8.0.0/24
     - OPENVPN_NETWORK_TCP=0 #optional, network that will be used for clients conneting through tcp. Defaults to 10.9.0.0/24
     - OPENVPN_ROUTE_DEV=0 #optional, device to route traffic, this parameter is useful when running openvpn with host networking
-    - OPENVPN_TUN_MTU=0 #optional, change mtu size. Defaults to 1420
-    - OPENVPN_MSSFIX=0 #optional, enables MSS fixing. Set to 0 for automatic or a specific value like 1400. If not set, MSS fixing is disabled. It is recommended to set it to 40 bytes less than OPENVPN_TUN_MTU
+    - OPENVPN_TUN_MTU=1420 #optional, change mtu size. Defaults to 1420
+    - OPENVPN_MSSFIX=1380 #optional, enables MSS fixing. Set to 0 for automatic or a specific value like 1400. If not set, MSS fixing is disabled. It is recommended to set it to 40 bytes less than OPENVPN_TUN_MTU
     - TZ=America/New_York   #optional timezone
   volumes:
     - <path-to-server-config>:/etc/openvpn/server
