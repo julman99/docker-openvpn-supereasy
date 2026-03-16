@@ -87,7 +87,7 @@ function initialize {
     ./easyrsa gen-dh
     ./easyrsa build-server-full server nopass
     openvpn --genkey --secret "$EASY_RSA_PATH/pki/ta.key"
-    ./easyrsa gen-crl
+    ./easyrsa --days=3650 gen-crl
     cd "$EASY_RSA_PATH/pki"
     cp -rp ca.crt dh.pem ta.key crl.pem issued private /etc/openvpn/server/
     touch "$READY_FILE"
@@ -168,6 +168,7 @@ function blacklist_unlisted_clients {
             ./easyrsa --days=3650 gen-crl
         fi
     done
+    ./easyrsa --days=3650 gen-crl
     cp -f pki/crl.pem /etc/openvpn/server/crl.pem
 }
 
