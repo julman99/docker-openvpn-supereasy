@@ -5,24 +5,23 @@
     {
       "matchDatasources": ["docker"],
       "matchPackageNames": ["alpine"],
-      "allowedVersions": "/^3\\.23\\./"
+      "allowedVersions": "/^3\\."
     },
     {
       "matchDatasources": ["repology"],
-      "matchPackageNames": ["alpine_3_23/openvpn"],
-      "groupName": "alpine + openvpn",
+      "matchPackageNames": ["/^alpine_3_\\d+/openvpn$/"],
       "commitMessageTopic": "openvpn"
     }
   ],
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)Dockerfile$"],
+      "managerFilePatterns": ["/(^|/)Dockerfile$/"],
       "matchStrings": [
-        "openvpn=(?<currentValue>[\\w.\\-]+)"
+        "FROM alpine:(?<alpineMinor>\\d+\\.\\d+)\\.\\d+[\\s\\S]*?openvpn=(?<currentValue>[\\w.\\-]+)"
       ],
       "datasourceTemplate": "repology",
-      "depNameTemplate": "alpine_3_23/openvpn",
+      "depNameTemplate": "alpine_{{replace '\\.' '_' alpineMinor}}/openvpn",
       "versioningTemplate": "loose"
     }
   ]
