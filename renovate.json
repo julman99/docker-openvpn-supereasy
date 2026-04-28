@@ -1,0 +1,29 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["alpine"],
+      "allowedVersions": "/^3\\.23\\./"
+    },
+    {
+      "matchDatasources": ["repology"],
+      "matchPackageNames": ["alpine_3_23/openvpn"],
+      "groupName": "alpine + openvpn",
+      "commitMessageTopic": "openvpn"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["(^|/)Dockerfile$"],
+      "matchStrings": [
+        "openvpn=(?<currentValue>[\\w.\\-]+)"
+      ],
+      "datasourceTemplate": "repology",
+      "depNameTemplate": "alpine_3_23/openvpn",
+      "versioningTemplate": "loose"
+    }
+  ]
+}
