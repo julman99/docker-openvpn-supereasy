@@ -5,7 +5,7 @@
     {
       "matchDatasources": ["docker"],
       "matchPackageNames": ["alpine"],
-      "allowedVersions": "/^3\\."
+      "allowedVersions": "/^3\\./"
     },
     {
       "matchDatasources": ["repology"],
