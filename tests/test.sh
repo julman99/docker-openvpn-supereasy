@@ -80,35 +80,58 @@ function test-cidr-validation() {
     reset_openvpn
 
     #udp
-    local output=$(@ovpn-setup -e OPENVPN_NETWORK_UDP="s")
+    local output=$(@ovpn-setup -e OPENVPN_PORT_UDP=1194 -e OPENVPN_NETWORK_UDP="s")
     @assert_equals "Error: Invalid CIDR notation." "$output"
 
-    local output=$(@ovpn-setup -e OPENVPN_NETWORK_UDP="500.0.0.0/24")
+    local output=$(@ovpn-setup -e OPENVPN_PORT_UDP=1194 -e OPENVPN_NETWORK_UDP="500.0.0.0/24")
     @assert_equals "Error: Invalid CIDR notation." "$output"
 
-    local output=$(@ovpn-setup -e OPENVPN_NETWORK_UDP="10.0.0.0/34")
+    local output=$(@ovpn-setup -e OPENVPN_PORT_UDP=1194 -e OPENVPN_NETWORK_UDP="10.0.0.0/34")
     @assert_equals "Error: Invalid CIDR notation." "$output"
 
-    local output=$(@ovpn-setup -e OPENVPN_NETWORK_UDP="")
+    local output=$(@ovpn-setup -e OPENVPN_PORT_UDP=1194 -e OPENVPN_NETWORK_UDP="")
     @assert_equals "Error: Invalid CIDR notation." "$output"
 
     #tcp
-    local output=$(@ovpn-setup -e OPENVPN_NETWORK_TCP="s")
+    local output=$(@ovpn-setup -e OPENVPN_PORT_TCP=443 -e OPENVPN_NETWORK_TCP="s")
     @assert_equals "Error: Invalid CIDR notation." "$output"
 
-    local output=$(@ovpn-setup -e OPENVPN_NETWORK_TCP="500.0.0.0/24")
+    local output=$(@ovpn-setup -e OPENVPN_PORT_TCP=443 -e OPENVPN_NETWORK_TCP="500.0.0.0/24")
     @assert_equals "Error: Invalid CIDR notation." "$output"
 
-    local output=$(@ovpn-setup -e OPENVPN_NETWORK_TCP="10.0.0.0/34")
+    local output=$(@ovpn-setup -e OPENVPN_PORT_TCP=443 -e OPENVPN_NETWORK_TCP="10.0.0.0/34")
     @assert_equals "Error: Invalid CIDR notation." "$output"
 
-    local output=$(@ovpn-setup -e OPENVPN_NETWORK_TCP="")
+    local output=$(@ovpn-setup -e OPENVPN_PORT_TCP=443 -e OPENVPN_NETWORK_TCP="")
     @assert_equals "Error: Invalid CIDR notation." "$output"
+}
+
+function test-disabled-protocol-network-validation() {
+    reset_openvpn
+
+    @ovpn-setup \
+        -e OPENVPN_CLIENTS="disabledtcp" \
+        -e OPENVPN_PORT_TCP=off \
+        -e OPENVPN_NETWORK_TCP="" \
+        -e OPENVPN_PORT_UDP=1194 \
+        -e OPENVPN_NETWORK_UDP=10.8.0.0/24
+    @assert_ls "clients" "disabledtcp.ovpn"
+
+    reset_openvpn
+
+    @ovpn-setup \
+        -e OPENVPN_CLIENTS="disabledudp" \
+        -e OPENVPN_PORT_UDP=off \
+        -e OPENVPN_NETWORK_UDP="" \
+        -e OPENVPN_PORT_TCP=443 \
+        -e OPENVPN_NETWORK_TCP=10.9.0.0/24
+    @assert_ls "clients" "disabledudp.ovpn"
 }
 
 test-client-generation
 test-client-connect-revoke
 test-client-revoke-crl-generation
 test-cidr-validation
+test-disabled-protocol-network-validation
 
 echo 'Success! All tests passed'

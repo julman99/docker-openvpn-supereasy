@@ -266,17 +266,19 @@ else
     OPENVPN_MSSFIX=""
 fi
 
-# Check if the CIDR has a mask, add /24 if not
-if [[ ! $OPENVPN_NETWORK_UDP =~ / ]]; then
-    OPENVPN_NETWORK_UDP="$OPENVPN_NETWORK_UDP/24"
+# Check if the CIDR has a mask, add /24 if not, and validate enabled protocols
+if [ -n "$OPENVPN_PORT_UDP" ]; then
+    if [[ ! "$OPENVPN_NETWORK_UDP" =~ / ]]; then
+        OPENVPN_NETWORK_UDP="$OPENVPN_NETWORK_UDP/24"
+    fi
+    assert_cidr "$OPENVPN_NETWORK_UDP"
 fi
-if [[ ! $OPENVPN_NETWORK_TCP =~ / ]]; then
-    OPENVPN_NETWORK_TCP="$OPENVPN_NETWORK_TCP/24"
+if [ -n "$OPENVPN_PORT_TCP" ]; then
+    if [[ ! "$OPENVPN_NETWORK_TCP" =~ / ]]; then
+        OPENVPN_NETWORK_TCP="$OPENVPN_NETWORK_TCP/24"
+    fi
+    assert_cidr "$OPENVPN_NETWORK_TCP"
 fi
-
-# Validate the CIDR
-assert_cidr "$OPENVPN_NETWORK_UDP"
-assert_cidr "$OPENVPN_NETWORK_TCP"
 
 assert_variable "OPENVPN_EXTERNAL_HOSTNAME"
 assert_variable "OPENVPN_CLIENTS"
