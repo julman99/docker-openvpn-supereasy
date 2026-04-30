@@ -22,7 +22,7 @@ openvpn-supereasy:
     - OPENVPN_CLIENTS=client1 client2 client3
     - OPENVPN_PING=10 #optional, ping interval to keep connections alive
     - OPENVPN_PING_RESTART=60 #optional, restart connection if no ping has been sucessful for the specified time
-    - OPENVPN_CIPHER=some.cipher #optional, one of AES-256-GCM, AES-128-GCM, AES-256-CBC or AES-128-CBC. If ommited OpenVPN tries to negotiate the most secure cipher supported by both server and client
+    - OPENVPN_CIPHER=AES-256-GCM #optional, one of AES-256-GCM, AES-128-GCM, AES-256-CBC or AES-128-CBC. If ommited OpenVPN tries to negotiate the most secure cipher supported by both server and client
     - OPENVPN_FASTIO=0 #optional, enable fastio on the server
     - OPENVPN_NETWORK_UDP=10.8.0.0/24 #optional, network that will be used for clients conneting through udp. Defaults to 10.8.0.0/24
     - OPENVPN_NETWORK_TCP=10.9.0.0/24 #optional, network that will be used for clients conneting through tcp. Defaults to 10.9.0.0/24
