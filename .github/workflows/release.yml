@@ -35,7 +35,7 @@ jobs:
 
       - name: Set up QEMU
         if: steps.tag_check.outputs.exists == 'false'
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Buildx
         if: steps.tag_check.outputs.exists == 'false'
