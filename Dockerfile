@@ -3,6 +3,7 @@ RUN  apk add --no-cache \
     openvpn=2.6.20-r0 \
     easy-rsa \
     iptables \
+    ipcalc \
     bash
 
 ENV EASYRSA_BATCH=yes \

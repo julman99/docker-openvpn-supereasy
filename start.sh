@@ -275,8 +275,8 @@ if [[ ! $OPENVPN_NETWORK_TCP =~ / ]]; then
 fi
 
 # Validate the CIDR
-assert_cidr $OPENVPN_NETWORK_UDP
-assert_cidr $OPENVPN_NETWORK_TCP
+assert_cidr "$OPENVPN_NETWORK_UDP"
+assert_cidr "$OPENVPN_NETWORK_TCP"
 
 assert_variable "OPENVPN_EXTERNAL_HOSTNAME"
 assert_variable "OPENVPN_CLIENTS"
