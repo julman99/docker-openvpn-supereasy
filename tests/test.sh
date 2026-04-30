@@ -133,9 +133,25 @@ function test-openvpn-startup-failure-does-not-hang() {
 
     @assert_serve_startup_failure_exits ovpn-test-startup-failure \
         -e OPENVPN_CLIENTS="startupfailure" \
-        -e OPENVPN_PORT_UDP=1194 \
+        -e OPENVPN_PORT_UDP=99999 \
         -e OPENVPN_PORT_TCP=off \
-        -e OPENVPN_TUN_MTU=not-a-number
+        -e OPENVPN_TUN_MTU=1420
+}
+
+function test-env-argument-validation() {
+    reset_openvpn
+
+    local output=$(@ovpn-setup -e OPENVPN_CLIENTS="test1" -e OPENVPN_TUN_MTU="1420 --verb 11")
+    @assert_equals "Error: OPENVPN_TUN_MTU must be a number." "$output"
+
+    local output=$(@ovpn-setup -e OPENVPN_CLIENTS="test1" -e OPENVPN_MSSFIX="1380 --client-connect /tmp/hook")
+    @assert_equals "Error: OPENVPN_MSSFIX must be a number." "$output"
+
+    local output=$(@ovpn-setup -e OPENVPN_CLIENTS="test1" -e OPENVPN_CIPHER="AES-256-GCM --verb 11")
+    @assert_equals "Error: Invalid OPENVPN_CIPHER." "$output"
+
+    local output=$(@ovpn-setup -e OPENVPN_CLIENTS="good --bad")
+    @assert_equals "Error: Invalid OPENVPN_CLIENTS entry: --bad" "$output"
 }
 
 test-client-generation
@@ -144,5 +160,6 @@ test-client-revoke-crl-generation
 test-cidr-validation
 test-disabled-protocol-network-validation
 test-openvpn-startup-failure-does-not-hang
+test-env-argument-validation
 
 echo 'Success! All tests passed'

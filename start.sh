@@ -59,6 +59,36 @@ assert_cidr() {
     fi
 }
 
+assert_number() {
+    local var_name="$1"
+    local var_value="${!var_name}"
+    if [[ ! "$var_value" =~ ^[0-9]+$ ]]; then
+        echo "Error: $var_name must be a number."
+        exit 1
+    fi
+}
+
+validate_cipher() {
+    case "$OPENVPN_CIPHER" in
+        AES-256-GCM|AES-128-GCM|AES-256-CBC|AES-128-CBC)
+            ;;
+        *)
+            echo "Error: Invalid OPENVPN_CIPHER."
+            exit 1
+            ;;
+    esac
+}
+
+validate_clients() {
+    local client
+    for client in $OPENVPN_CLIENTS; do
+        if [[ ! "$client" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]]; then
+            echo "Error: Invalid OPENVPN_CLIENTS entry: $client"
+            exit 1
+        fi
+    done
+}
+
 wait_for_tun() {
   local TUN_DEVICE=$1
   local OPENVPN_PID=$2
@@ -210,7 +240,7 @@ function run_openvpn {
         --key-direction 0 \
         --auth SHA256 \
         --crl-verify /etc/openvpn/server/crl.pem \
-        $OPENVPN_CIPHER \
+        "${OPENVPN_CIPHER_ARGS[@]}" \
         --persist-tun \
         --persist-key \
         --topology subnet \
@@ -222,9 +252,9 @@ function run_openvpn {
         --rcvbuf 524288 \
         --push "sndbuf 524288" \
         --push "rcvbuf 524288" \
-        --tun-mtu $OPENVPN_TUN_MTU \
-        $OPENVPN_MSSFIX \
-        $OPENVPN_FASTIO
+        --tun-mtu "$OPENVPN_TUN_MTU" \
+        "${OPENVPN_MSSFIX_ARGS[@]}" \
+        "${OPENVPN_FASTIO_ARGS[@]}"
 }
 
 function start {
@@ -265,20 +295,24 @@ if [ -z "$OPENVPN_PORT_UDP" ] && [ -z "$OPENVPN_PORT_TCP" ]; then
     echo "Error: OPENVPN_PORT_UDP and/or OPENVPN_PORT_TCP must be set"
     exit 2
 fi
-if [ "$OPENVPN_CIPHER" != "" ]; then
-    OPENVPN_CIPHER="--data-ciphers $OPENVPN_CIPHER --cipher $OPENVPN_CIPHER"
-fi
-if [ "$OPENVPN_FASTIO" == "true" ] || [ "$OPENVPN_FASTIO" == "1" ]; then
-    echo "Notice: --fast-io is enabled"
-    OPENVPN_FASTIO="--fast-io"
-else
-    OPENVPN_FASTIO=""
+OPENVPN_CIPHER_ARGS=()
+if [ -n "$OPENVPN_CIPHER" ]; then
+    validate_cipher
+    OPENVPN_CIPHER_ARGS=(--data-ciphers "$OPENVPN_CIPHER" --cipher "$OPENVPN_CIPHER")
 fi
 
+assert_number "OPENVPN_TUN_MTU"
+
+OPENVPN_FASTIO_ARGS=()
+if [ "$OPENVPN_FASTIO" == "true" ] || [ "$OPENVPN_FASTIO" == "1" ]; then
+    echo "Notice: --fast-io is enabled"
+    OPENVPN_FASTIO_ARGS=(--fast-io)
+fi
+
+OPENVPN_MSSFIX_ARGS=()
 if [ -n "$OPENVPN_MSSFIX" ]; then
-    OPENVPN_MSSFIX="--mssfix $OPENVPN_MSSFIX"
-else
-    OPENVPN_MSSFIX=""
+    assert_number "OPENVPN_MSSFIX"
+    OPENVPN_MSSFIX_ARGS=(--mssfix "$OPENVPN_MSSFIX")
 fi
 
 # Check if the CIDR has a mask, add /24 if not, and validate enabled protocols
@@ -297,6 +331,7 @@ fi
 
 assert_variable "OPENVPN_EXTERNAL_HOSTNAME"
 assert_variable "OPENVPN_CLIENTS"
+validate_clients
 
 if [ ! -f "$READY_FILE" ]; then
     initialize
