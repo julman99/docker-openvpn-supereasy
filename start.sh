@@ -61,9 +61,22 @@ assert_cidr() {
 
 wait_for_tun() {
   local TUN_DEVICE=$1
+  local OPENVPN_PID=$2
+  local TIMEOUT_SECONDS=${3:-30}
+  local ELAPSED_SECONDS=0
+
   while ! ip link show "$TUN_DEVICE" > /dev/null 2>&1; do
+    if ! kill -0 "$OPENVPN_PID" > /dev/null 2>&1; then
+      echo "Error: OpenVPN exited before $TUN_DEVICE was created."
+      return 1
+    fi
+    if ((ELAPSED_SECONDS >= TIMEOUT_SECONDS)); then
+      echo "Error: Timed out waiting for $TUN_DEVICE to be created."
+      return 1
+    fi
     echo "Waiting for $TUN_DEVICE to be created..."
     sleep 1
+    ELAPSED_SECONDS=$((ELAPSED_SECONDS + 1))
   done
   echo "$TUN_DEVICE exists!"
 }
@@ -179,7 +192,7 @@ function run_openvpn {
     local net="$4"
     local net_ip=$(ipcalc -n "$net" | grep 'NETWORK' | awk -F '=' '{print $2}')
     local net_mask=$(ipcalc -n -m "$net" | grep 'NETMASK' | awk -F '=' '{print $2}')
-    openvpn \
+    exec openvpn \
         --server "$net_ip" "$net_mask" \
         --dev "$tun" \
         --dev-type "tun" \
@@ -225,14 +238,16 @@ function start {
     if [ ! -z "$OPENVPN_PORT_UDP" ]; then
         echo "Starting openvpn with udp..."
         run_openvpn "$OPENVPN_PORT_UDP" "udp" "ovpnsetun0" "$OPENVPN_NETWORK_UDP" &
-        wait_for_tun "ovpnsetun0"
+        udp_pid=$!
+        wait_for_tun "ovpnsetun0" "$udp_pid"
 
         iptables -t nat -A POSTROUTING -s "$OPENVPN_NETWORK_UDP" -o "$OPENVPN_ROUTE_DEV" -j MASQUERADE
     fi
     if [ ! -z "$OPENVPN_PORT_TCP" ]; then
         echo "Starting openvpn with tcp..."
         run_openvpn "$OPENVPN_PORT_TCP" "tcp" "ovpnsetun1" "$OPENVPN_NETWORK_TCP" &
-        wait_for_tun "ovpnsetun1"
+        tcp_pid=$!
+        wait_for_tun "ovpnsetun1" "$tcp_pid"
 
         iptables -t nat -A POSTROUTING -s "$OPENVPN_NETWORK_TCP" -o "$OPENVPN_ROUTE_DEV" -j MASQUERADE
     fi

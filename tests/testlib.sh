@@ -82,6 +82,55 @@ function @ovpn-serve-start {
     sleep 5
 }
 
+function @assert_serve_startup_failure_exits {
+    local container_name="$1"
+    shift
+    local log_file="tmp/$container_name.log"
+
+    docker rm -f "$container_name" >/dev/null 2>&1 || true
+
+    set +e
+    docker run --name "$container_name" \
+        --rm \
+        -e OPENVPN_EXTERNAL_HOSTNAME=ovpn-test-serve \
+        --hostname=ovpn-test-serve \
+        --network=ovpn-test \
+        -v "$(pwd)/server:/etc/openvpn/server" \
+        -v "$(pwd)/clients:/etc/openvpn/clients" \
+        -v "$(pwd)/tmp:/tmp" \
+        --cap-add NET_ADMIN \
+        "$@" ovpn-test serve > "$log_file" 2>&1 &
+    local docker_pid=$!
+    local exited=0
+
+    for _ in {1..10}; do
+        if ! kill -0 "$docker_pid" >/dev/null 2>&1; then
+            exited=1
+            break
+        fi
+        sleep 1
+    done
+
+    if [ "$exited" != "1" ]; then
+        docker kill "$container_name" >/dev/null 2>&1 || true
+        wait "$docker_pid" >/dev/null 2>&1
+        set -e
+        echo "Error: serve did not exit after OpenVPN startup failure."
+        cat "$log_file"
+        exit 1
+    fi
+
+    wait "$docker_pid"
+    local actual_exit_code=$?
+    set -e
+
+    if [ "$actual_exit_code" == "0" ]; then
+        echo "Error: serve exited successfully after OpenVPN startup failure."
+        cat "$log_file"
+        exit 1
+    fi
+}
+
 function @ovpn-serve-stop {
     echo "STOPPING OPENVPN SERVER: `docker kill ovpn-test-serve`"
 }

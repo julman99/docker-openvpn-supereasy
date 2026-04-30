@@ -128,10 +128,21 @@ function test-disabled-protocol-network-validation() {
     @assert_ls "clients" "disabledudp.ovpn"
 }
 
+function test-openvpn-startup-failure-does-not-hang() {
+    reset_openvpn
+
+    @assert_serve_startup_failure_exits ovpn-test-startup-failure \
+        -e OPENVPN_CLIENTS="startupfailure" \
+        -e OPENVPN_PORT_UDP=1194 \
+        -e OPENVPN_PORT_TCP=off \
+        -e OPENVPN_TUN_MTU=not-a-number
+}
+
 test-client-generation
 test-client-connect-revoke
 test-client-revoke-crl-generation
 test-cidr-validation
 test-disabled-protocol-network-validation
+test-openvpn-startup-failure-does-not-hang
 
 echo 'Success! All tests passed'
