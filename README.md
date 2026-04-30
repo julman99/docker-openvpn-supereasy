@@ -8,7 +8,7 @@ https://hub.docker.com/r/julman99/openvpn-supereasy
 
 # Docker Compose file
 
-```
+```yaml
 openvpn-supereasy:
   image: julman99/openvpn-supereasy
   container_name: openvpn-supereasy
