@@ -1,6 +1,6 @@
 FROM alpine:3.23.4
 RUN  apk add --no-cache \
-    openvpn=2.6.20-r0 \
+    openvpn=2.6.23-r0 \
     easy-rsa \
     iptables \
     ipcalc \
